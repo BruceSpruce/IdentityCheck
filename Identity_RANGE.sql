@@ -21,23 +21,15 @@ ALTER PROCEDURE [dbo].[usp_CheckIdentityValue]
 AS
 ------------------------------------------
 ---- Check Identity Value Consumption ----
----------- Version 1.00 (2018) -----------
+---------- Version 1.01 (2019) -----------
 ------------------------------------------
 ---- Examples:
-/*
-EXEC master.dbo.usp_CheckIdentityValue @dbmail_profile_name = 'mail_profile',@email_recipients = 'miros@poczta.fm'
-
-EXEC master.dbo.usp_CheckIdentityValue @database = 'MyDB', @schema = 'RANGE', 
-                                       @LevelAlert = 80, @MonthAlert = 6, 
-                                       @dbmail_profile_name = 'mail_profile',@email_recipients = 'miros@poczta.fm'
-
-EXEC master.dbo.usp_CheckIdentityValue
-*/
+---- EXEC master..usp_CheckIdentityValue @dbmail_profile_name = 'mail_profile',@email_recipients = 'miros@poczta.fm'
 BEGIN
 		
 	---- VARIABLES ----
 	DECLARE @subject NVARCHAR(200) = '[' + @@SERVERNAME + '] IDENTITY VALUE CONSUMPTION REPORT. DATE: ' + CONVERT(CHAR(19), SYSDATETIME(), 121);
-	DECLARE @version NVARCHAR(200) = 'Identity Value Consumption REPORT v.1.00 (' + CAST (YEAR(SYSDATETIME()) AS CHAR(4)) + ')';
+	DECLARE @version NVARCHAR(200) = 'Identity Value Consumption REPORT v.1.01 (' + CAST (YEAR(SYSDATETIME()) AS CHAR(4)) + ')';
 	DECLARE @html_body NVARCHAR(MAX);
 	DECLARE @ErrorMessage NVARCHAR(4000);  
     DECLARE @ErrorSeverity INT;  
@@ -180,6 +172,37 @@ BEGIN
 		RETURN 1;
 	END CATCH
 
+    ---- Create IdentityCheckExceptions Table ----
+	SET @SQLCommand = N'
+	USE [' + @database + '];
+
+	IF NOT EXISTS ( SELECT 1
+					FROM sys.tables t
+					JOIN sys.schemas s
+					ON t.schema_id = s.schema_id
+					WHERE s.name = ''' + @schema + ''' AND
+						  t.name = ''IdentityCheckExceptions'')
+	CREATE TABLE [' + @schema + '].[IdentityCheckExceptions](
+		[id] [int] IDENTITY (1,1) CONSTRAINT [PK_ID_IdentityCheckExceptions] PRIMARY KEY CLUSTERED,
+		[database_name] [sysname] NOT NULL,
+		[schema_name] [nvarchar](128) NULL,
+		[table_name] [sysname] NOT NULL,
+		[column_name] [sysname] NULL
+	) ON [PRIMARY]';
+	BEGIN TRY
+		EXECUTE(@SQLCommand);
+	END TRY
+	BEGIN CATCH
+		SELECT   
+			@ErrorMessage = ERROR_MESSAGE(),  
+			@ErrorSeverity = ERROR_SEVERITY(),  
+			@ErrorState = ERROR_STATE();
+		PRINT 'Command: ' + @SQLCommand;
+		RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
+		RETURN 1;
+	END CATCH
+
+
 	---- PROCEDURE ----
 	---- GET LAST SNAP_ID ----
 	DECLARE @Snap_id INT;
@@ -275,7 +298,16 @@ BEGIN
 				END AS [identityvalue_consumption_in_percent],
 				IdentBuffer.[expected_date_of_filling]
 			FROM
-				IdentBuffer;';
+				IdentBuffer;
+            
+            -- DELETE EXCEPTIONS
+            DELETE [IC] FROM [' + @database + '].[' + @schema + '].[IdentityCheck] AS [IC]
+            JOIN [' + @database + '].[' + @schema + '].[IdentityCheckExceptions] AS [ICE]
+                ON [IC].[database_name] = [ICE].[database_name]
+                AND [IC].[schema_name] = [ICE].[schema_name]
+                AND [IC].[table_name] = [ICE].[table_name]
+                AND [IC].[column_name] = [ICE].[column_name] 
+            ';
 			BEGIN TRY
 				EXECUTE(@SQLCommand);
 			END TRY
@@ -466,4 +498,4 @@ BEGIN
 					@subject = @subject,
 					@body_format = 'HTML';
 	END
-END
+END;
