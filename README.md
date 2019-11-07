@@ -41,6 +41,12 @@ https://blog.atena.pl/sql-server-administration-przekrecony-licznik
 
 * **@email_recipients** (nvarchar(max)) - who receive emails with report about problematics columns - *default NULL*
 
+## IdentityCheckExceptions table
+
+You use this table if you want to exclude some columns from checking for some reason:
+
+![Report image](/images/IdentityCheckExceptions_table.png)
+
 ## Examples of use
 
 * ```Exec [master].[dbo].[usp_CheckIdentityValue] @dbmail_profile_name = 'mail_profile', @email_recipients = 'miros(at)poczta.fm' ```
