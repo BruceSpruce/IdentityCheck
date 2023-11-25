@@ -76,25 +76,25 @@ BEGIN
 			''bigint'' AS [name],
 			9223372036854775807 AS MaxValue,
 			-9223372036854775808 AS MinValue,
-			19 AS precision
+			19 AS Precision
 		UNION ALL
 		SELECT
 			''int'',
 			2147483647,
 			-2147483648,
-			10 AS precision
+			10 AS Precision
 		UNION ALL
 		SELECT
 			''smallint'',
 			32767,
 			-32768,
-			5 AS precision
+			5 AS Precision
 		UNION ALL
 		SELECT
 			''tinyint'',
 			255,
 			0,
-			3 AS precision
+			3 AS Precision
 
 		-- DECIMAL/NUMERIC --
 		DECLARE @SIZE TINYINT = 1
@@ -107,12 +107,12 @@ BEGIN
 			SET @CMD
 				= ''INSERT INTO [' + @schema + '].[TypeRange] SELECT ''''numeric'''' AS [name], '' + CAST(ABS(@VALUE) AS VARCHAR(39))
 				  + '' AS MaxValue, '' + CAST(@VALUE AS VARCHAR(39)) + '' AS MinValue, '' + CAST(@SIZE AS VARCHAR)
-				  + '' AS precision;'';
+				  + '' AS Precision;'';
 			EXEC (@CMD);
 			SET @CMD
 				= ''INSERT INTO [' + @schema + '].[TypeRange] SELECT ''''decimal'''' AS [name], '' + CAST(ABS(@VALUE) AS VARCHAR(39))
 				  + '' AS MaxValue, '' + CAST(@VALUE AS VARCHAR(39)) + '' AS MinValue, '' + CAST(@SIZE AS VARCHAR)
-				  + '' AS precision;'';
+				  + '' AS Precision;'';
 			EXEC (@CMD);
 			SET @SIZE += 1;
 		END;
@@ -151,7 +151,7 @@ BEGIN
 		[data_type] [sysname] NOT NULL,
 		[seed_value] [numeric](38, 0) NULL,
 		[increment_value] [sql_variant] NULL,
-		[precision] [tinyint] NOT NULL,
+		[Precision] [tinyint] NOT NULL,
 		[last_value] [numeric](38, 0) NULL,
 		[max_type_value] [numeric](38, 0) NOT NULL,
 		[full_type_range] [numeric](38, 0) NULL,
@@ -247,7 +247,7 @@ BEGIN
 				O.name AS table_name,
 				IC.name AS column_name,
 				T.name AS data_type,
-				TR.precision AS precison,
+				TR.Precision AS Precision,
 				CAST(IC.seed_value AS decimal(38, 0)) AS seed_value,
 				IC.increment_value,
 				CAST(IC.last_value AS decimal(38, 0)) AS last_value,
@@ -256,7 +256,7 @@ BEGIN
 				CAST(CASE
 						WHEN seed_value < 0
 						THEN TR.MaxValue - TR.MinValue
-						ELSE TR.maxValue
+						ELSE TR.MaxValue
 					END AS decimal(38, 0)) AS full_type_range,
 				TR.MaxValue AS max_type_value,
 				NULL AS [expected_date_of_filling]
@@ -267,7 +267,7 @@ BEGIN
 				JOIN
 				sys.objects O WITH (NOLOCK) ON IC.object_id = O.object_id
 				JOIN
-				[' + @database + '].[' + @schema + '].[TypeRange] TR ON T.[name] COLLATE DATABASE_DEFAULT = TR.[name] COLLATE DATABASE_DEFAULT AND IC.[precision] = TR.[precision]
+				[' + @database + '].[' + @schema + '].[TypeRange] TR ON T.[name] COLLATE DATABASE_DEFAULT = TR.[name] COLLATE DATABASE_DEFAULT AND IC.[Precision] = TR.[Precision]
 			WHERE
 				O.is_ms_shipped = 0)
 			INSERT INTO [' + @database + '].[' + @schema + '].[IdentityCheck]
@@ -281,7 +281,7 @@ BEGIN
 				IdentBuffer.[data_type],
 				IdentBuffer.[seed_value],
 				IdentBuffer.[increment_value],
-				IdentBuffer.[precison],
+				IdentBuffer.[Precision],
 				IdentBuffer.[last_value],
 				IdentBuffer.[max_type_value],
 				IdentBuffer.[full_type_range],
@@ -364,7 +364,7 @@ BEGIN
 						   AND I.schema_name COLLATE DATABASE_DEFAULT = R.schema_name COLLATE DATABASE_DEFAULT
 						   AND I.table_name COLLATE DATABASE_DEFAULT = R.table_name COLLATE DATABASE_DEFAULT
 						   AND I.column_name COLLATE DATABASE_DEFAULT = R.column_name COLLATE DATABASE_DEFAULT
-						   AND I.precision = R.precision
+						   AND I.Precision = R.Precision
 						   AND I.snap_id <> R.snap_id;
 
 				SET @CntOfCol -= 1;
@@ -414,7 +414,7 @@ BEGIN
 							  ,[column_name]
 							  ,[data_type]
 							  ,[increment_value]
-							  ,[precision]
+							  ,[Precision]
 							  ,[last_value]
 							  ,[max_type_value]
 							  ,[buffer]
@@ -473,7 +473,7 @@ BEGIN
 			column_name AS [TD align=center],
 			data_type AS [TD align=center],
 			increment_value AS [TD align=right],
-			precision AS [TD align=right],
+			Precision AS [TD align=right],
 			last_value AS [TD align=right],
 			max_type_value AS [TD align=right],
 			buffer AS [TD align=right],
