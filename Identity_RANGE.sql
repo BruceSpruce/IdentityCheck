@@ -228,7 +228,6 @@ BEGIN
           AND
           (
               source_database_id IS NULL
-              AND snapshot_isolation_state = 0
               AND is_read_only = 0
           );
 
